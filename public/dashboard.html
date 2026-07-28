@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Warung Enterprise - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>body{font-family:system-ui,sans-serif;background:#0f172a;}</style>
+</head>
+<body class="bg-slate-950 text-white min-h-screen" x-data="dashboard()">
+    <nav class="bg-slate-900/80 border-b border-slate-800 px-6 py-3 flex justify-between items-center sticky top-0 z-50 backdrop-blur-xl">
+        <h1 class="text-lg font-bold bg-gradient-to-r from-amber-600 to-emerald-600 bg-clip-text text-transparent">ðxS Aplikasi Warung Enterprise</h1>
+        <div class="flex gap-2"><button @click="activeTab='menu'" :class="activeTab==='menu'?' bg-gradient-to-r from-amber-600 to-emerald-600 text-white font-bold shadow-lg':'text-slate-400 hover:text-white'" class="px-4 py-2 rounded-xl text-xs transition-all">Menu & Item</button><button @click="activeTab='transaksi'" :class="activeTab==='transaksi'?' bg-gradient-to-r from-amber-600 to-emerald-600 text-white font-bold shadow-lg':'text-slate-400 hover:text-white'" class="px-4 py-2 rounded-xl text-xs transition-all">Transaksi Kasir</button><button @click="activeTab='pengeluaran'" :class="activeTab==='pengeluaran'?' bg-gradient-to-r from-amber-600 to-emerald-600 text-white font-bold shadow-lg':'text-slate-400 hover:text-white'" class="px-4 py-2 rounded-xl text-xs transition-all">Pengeluaran</button></div>
+    </nav>
+    <main class="max-w-7xl mx-auto p-6 space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <template x-for="s in stats" :key="s.key">
+                <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-5">
+                    <p class="text-xs text-slate-400" x-text="s.label"></p>
+                    <h3 class="text-2xl font-bold" x-text="(data[s.key] || []).length"></h3>
+                </div>
+            </template>
+        </div>
+        
+        <div x-show="activeTab==='menu'" class="space-y-4">
+            <div class="flex justify-between items-center">
+                <h2 class="text-lg font-bold text-white">ðxS Menu & Item</h2>
+                <button @click="openCreateModal('menu')" class="bg-gradient-to-r from-amber-600 to-emerald-600 text-white font-bold text-xs px-5 py-2 rounded-xl">Tambah Menu & Item</button>
+            </div>
+            <div class="glass-enhanced border border-slate-800 rounded-2xl overflow-hidden">
+                <table class="w-full"><thead class="bg-slate-900/50"><tr><th class="p-3 text-left text-[10px] uppercase tracking-wider">Kode Menu</th><th class="p-3 text-left text-[10px] uppercase tracking-wider">Nama Menu</th><th class="p-3 text-left text-[10px] uppercase tracking-wider">Kategori</th><th class="p-3 text-left text-[10px] uppercase tracking-wider">Harga (Rp)</th><th class="p-3 text-left text-[10px] uppercase tracking-wider">Stok Unit</th></tr></thead>
+                <tbody><template x-for="item in menu" :key="item.id"><tr class="border-t border-slate-800/50 hover:bg-slate-800/30"><td class="p-3 font-semibold text-slate-200 text-xs" x-text="item.kode"></td><td class="p-3 font-semibold text-slate-200 text-xs" x-text="item.nama"></td><td class="p-3 font-semibold text-slate-200 text-xs" x-text="item.kategori"></td><td class="p-3 font-semibold text-slate-200 text-xs" x-text="item.harga"></td><td class="p-3 font-semibold text-slate-200 text-xs" x-text="item.stok"></td>
+                <td class="p-3"><button @click="deleteItem('menu', item.id)" class="text-red-400 text-xs">Hapus</button></td>
+                </tr></template></tbody></table>
+            </div>
+        </div>
+        <div x-show="activeTab==='transaksi'" class="space-y-4">
+            <div class="flex justify-between items-center">
+                <h2 class="text-lg font-bold text-white">ðxS Transaksi Kasir</h2>
+                <button @click="openCreateModal('transaksi')" class="bg-gradient-to-r from-amber-600 to-emerald-600 text-white font-bold text-xs px-5 py-2 rounded-xl">Tambah Transaksi Kasir</button>
+            </div>
+            <div class="glass-enhanced border border-slate-800 rounded-2xl overflow-hidden">
+                <table class="w-full"><thead class="bg-slate-900/50"><tr><th class="p-3 text-left text-[10px] uppercase tracking-wider">No. Invoice</th><th class="p-3 text-left text-[10px] uppercase tracking-wider">Nama Pembeli</th><th class="p-3 text-left text-[10px] uppercase tracking-wider">Pesanan</th><th class="p-3 text-left text-[10px] uppercase tracking-wider">Total (Rp)</th><th class="p-3 text-left text-[10px] uppercase tracking-wider">Metode Bayar</th><th class="p-3 text-left text-[10px] uppercase tracking-wider">Status</th></tr></thead>
+                <tbody><template x-for="item in transaksi" :key="item.id"><tr class="border-t border-slate-800/50 hover:bg-slate-800/30"><td class="p-3 font-semibold text-slate-200 text-xs" x-text="item.invoice"></td><td class="p-3 font-semibold text-slate-200 text-xs" x-text="item.pembeli"></td><td class="p-3 font-semibold text-slate-200 text-xs" x-text="item.item"></td><td class="p-3 font-semibold text-slate-200 text-xs" x-text="item.total"></td><td class="p-3 font-semibold text-slate-200 text-xs" x-text="item.metode"></td><td class="p-3 font-semibold text-slate-200 text-xs" x-text="item.status"></td>
+                <td class="p-3"><button @click="deleteItem('transaksi', item.id)" class="text-red-400 text-xs">Hapus</button></td>
+                </tr></template></tbody></table>
+            </div>
+        </div>
+        <div x-show="activeTab==='pengeluaran'" class="space-y-4">
+            <div class="flex justify-between items-center">
+                <h2 class="text-lg font-bold text-white">ðxS Pengeluaran</h2>
+                <button @click="openCreateModal('pengeluaran')" class="bg-gradient-to-r from-amber-600 to-emerald-600 text-white font-bold text-xs px-5 py-2 rounded-xl">Tambah Pengeluaran</button>
+            </div>
+            <div class="glass-enhanced border border-slate-800 rounded-2xl overflow-hidden">
+                <table class="w-full"><thead class="bg-slate-900/50"><tr><th class="p-3 text-left text-[10px] uppercase tracking-wider">Keterangan</th><th class="p-3 text-left text-[10px] uppercase tracking-wider">Nominal (Rp)</th><th class="p-3 text-left text-[10px] uppercase tracking-wider">Tanggal</th></tr></thead>
+                <tbody><template x-for="item in pengeluaran" :key="item.id"><tr class="border-t border-slate-800/50 hover:bg-slate-800/30"><td class="p-3 font-semibold text-slate-200 text-xs" x-text="item.keterangan"></td><td class="p-3 font-semibold text-slate-200 text-xs" x-text="item.nominal"></td><td class="p-3 font-semibold text-slate-200 text-xs" x-text="item.tanggal"></td>
+                <td class="p-3"><button @click="deleteItem('pengeluaran', item.id)" class="text-red-400 text-xs">Hapus</button></td>
+                </tr></template></tbody></table>
+            </div>
+        </div>
+    </main>
+    <div x-show="showModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50" @click.self="showModal=false">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl p-6 w-full max-w-md">
+            <h3 class="text-lg font-bold text-white mb-4">Tambah Data</h3>
+            <template x-for="f in modalFields" :key="f.key">
+                <div class="mb-3">
+                    <label class="text-xs text-slate-400" x-text="f.label"></label>
+                    <input :type="f.type === 'number' ? 'number' : 'text'" x-model="newItem[f.key]" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white text-sm mt-1">
+                </div>
+            </template>
+            <div class="flex gap-2 mt-4">
+                <button @click="saveItem()" class="bg-gradient-to-r from-amber-600 to-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-bold">Simpan</button>
+                <button @click="showModal=false" class="bg-slate-800 text-slate-300 px-4 py-2 rounded-xl text-sm">Batal</button>
+            </div>
+        </div>
+    </div>
+    <script>
+    function dashboard() {
+        return {
+            activeTab: "menu",
+            stats: [{ key: "menu", label: "Menu & Item" }, { key: "transaksi", label: "Transaksi Kasir" }, { key: "pengeluaran", label: "Pengeluaran" }],
+            data: {"menu": [], "transaksi": [], "pengeluaran": []},
+            newItem: {},
+            showModal: false,
+            _modalEntity: null,
+            get modalFields() {
+                const entity = {"menu": [], "transaksi": [], "pengeluaran": [] };
+                for (const [k, v] of Object.entries(this.data)) {
+                    if (k === this._modalEntity && v.length > 0) {
+                        const sample = v[0];
+                        return Object.keys(sample).filter(k => k !== 'id').map(k => ({ key: k, label: k, type: typeof sample[k] === 'number' ? 'number' : 'text' }));
+                    }
+                }
+                return [];
+            },
+            openCreateModal(entity) {
+                this._modalEntity = entity;
+                this.newItem = {};
+                this.showModal = true;
+            },
+            saveItem() {
+                if (this._modalEntity && this.data[this._modalEntity]) {
+                    this.data[this._modalEntity].push({...this.newItem, id: Date.now() });
+                }
+                this.showModal = false;
+                this.newItem = {};
+            },
+            deleteItem(entity, id) {
+                this.data[entity] = this.data[entity].filter(i => i.id !== id);
+            }
+        }
+    }
+    </script>
+</body>
+</html>
