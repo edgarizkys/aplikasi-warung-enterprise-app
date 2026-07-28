@@ -1,7 +1,7 @@
 {
   "name": "aplikasi-warung-enterprise-app",
   "version": "5.0.0-worldclass",
-  "description": "Aplikasi Warung Enterprise - Sistem Kasir POS & Inventory Warung Enterprise",
+  "description": "Aplikasi Warung Enterprise - Sistem Manajemen Warung Enterprise",
   "main": "src/app.js",
   "scripts": {
     "start": "node src/app.js",
