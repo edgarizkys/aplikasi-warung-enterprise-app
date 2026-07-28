@@ -1,8 +1,14 @@
 # Aplikasi Warung Enterprise
 
-🍜 Sistem Kasir POS & Inventory Warung Enterprise - World-Class Enterprise v5.0
+ðxS Sistem Manajemen Warung Enterprise - World-Class Enterprise v5.0
+
+## Pages
+- **/** - Landing Page (Marketing, Hero, Features, Pricing, Testimonials)
+- **/login** - Login & Register Page
+- **/dashboard** - Main Dashboard (CRUD, Analytics, Charts)
 
 ## Features & Architecture
+- **Landing Page**: Scroll animations, typing effects, parallax, glassmorphism
 - **Payment Gateway**: Midtrans & Xendit QRIS / VA + Webhook Verification
 - **Security**: Express Rate Limiter (100 req/min) & Helmet Security
 - **Analytics**: Chart.js Interactive Graph Visualization
@@ -11,9 +17,9 @@
 - **Database**: Turso Cloud SQLite Database
 
 ## Entities
-- **Menu & Barang Warung**: Kode Menu, Nama Menu / Barang, Kategori, Harga (Rp), Stok Unit
-- **Transaksi Kasir**: No. Invoice, Nama Pembeli, Pesanan / Item, Total (Rp), Status Bayar
-- **Pengeluaran Belanja**: Beli Bahan / Modal, Nominal (Rp), Tanggal
+- **Menu & Item**: Kode Menu, Nama Menu, Kategori, Harga (Rp), Stok Unit
+- **Transaksi Kasir**: No. Invoice, Nama Pembeli, Pesanan, Total (Rp), Metode Bayar, Status
+- **Pengeluaran**: Keterangan, Nominal (Rp), Tanggal
 
 ---
 *Built by E.D.G.A.R Senior Principal Engineer Agent - EdgarTech Corp*
