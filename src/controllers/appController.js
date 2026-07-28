@@ -1,10 +1,10 @@
-// World-Class Controllers for Aplikasi Warung Enterprise (Sistem Kasir POS & Inventory Warung Enterprise)
+// World-Class Controllers for Aplikasi Warung Enterprise (Sistem Manajemen Warung Enterprise)
 
 let menuData = [
   {
     "id": 1,
     "kode": "MNU-001",
-    "nama": "Nasi Goreng Spesial Telur",
+    "nama": "Nasi Goreng Spesial",
     "kategori": "Makanan Utama",
     "harga": 18000,
     "stok": 50
@@ -12,7 +12,7 @@ let menuData = [
   {
     "id": 2,
     "kode": "MNU-002",
-    "nama": "Es Teh Manis Jumbo",
+    "nama": "Es Teh Manis",
     "kategori": "Minuman",
     "harga": 5000,
     "stok": 100
@@ -40,7 +40,7 @@ exports.createMenu = async (req, res) => {
 
 exports.deleteMenu = async (req, res) => {
     menuData = menuData.filter(i => i.id !== parseInt(req.params.id));
-    res.json({ success: true, message: 'Menu & Barang Warung deleted' });
+    res.json({ success: true, message: 'Menu & Item deleted' });
 };
 
 let transaksiData = [
@@ -48,8 +48,9 @@ let transaksiData = [
     "id": 1,
     "invoice": "TRX-20260725-001",
     "pembeli": "Pak Edgar",
-    "item": "2x Nasgor Spesial + 2x Es Teh",
+    "item": "2x Nasgor + 2x Es Teh",
     "total": 46000,
+    "metode": "QRIS Midtrans",
     "status": "LUNAS"
   },
   {
@@ -58,6 +59,7 @@ let transaksiData = [
     "pembeli": "Mas Budi",
     "item": "1x Mie Dok Dok",
     "total": 15000,
+    "metode": "Tunai",
     "status": "LUNAS"
   }
 ];
@@ -100,9 +102,9 @@ exports.createPengeluaran = async (req, res) => {
 
 exports.deletePengeluaran = async (req, res) => {
     pengeluaranData = pengeluaranData.filter(i => i.id !== parseInt(req.params.id));
-    res.json({ success: true, message: 'Pengeluaran Belanja deleted' });
+    res.json({ success: true, message: 'Pengeluaran deleted' });
 };
 
 exports.getAnalytics = async (req, res) => {
-    res.json({ success: true, platform: 'Aplikasi Warung Enterprise', domain: 'Sistem Kasir POS & Inventory Warung Enterprise', version: '5.0.0-WorldClass', architecture: 'Multi-Tenant Ready + Redis Cache' });
+    res.json({ success: true, platform: 'Aplikasi Warung Enterprise', domain: 'Sistem Manajemen Warung Enterprise', version: '5.0.0-WorldClass', architecture: 'Multi-Tenant Ready + Redis Cache' });
 };
