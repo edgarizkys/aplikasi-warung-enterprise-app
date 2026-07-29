@@ -1,38 +1,108 @@
 const paymentService = require('../services/paymentService');
+const { createClient } = require('@libsql/client');
 
-exports.createQris = async (req, res) => {
-    try {
-        const { orderId, amount, customerInfo } = req.body;
-        if (!amount || amount <= 0) {
-            return res.status(400).json({ error: 'Invalid amount' });
+const db = createClient({
+    url: process.env.TURSO_DATABASE_URL,
+    authToken: process.env.TURSO_AUTH_TOKEN,
+});
+
+const paymentController = {
+    async createPayment(req, res) {
+        try {
+            const { saleId, method, bank } = req.body;
+
+            const saleResult = await db.execute({
+                sql: "SELECT * FROM sales WHERE sale_id = ?",
+                args: [saleId]
+            });
+
+            const sale = saleResult.rows[0];
+            if (!sale) return res.status(404).json({ error: "Transaksi tidak ditemukan" });
+
+            let paymentData;
+            if (method === 'qris') {
+                paymentData = await paymentService.createQrisTransaction(
+                    sale.sale_id,
+                    sale.total_amount,
+                    { name: sale.customer_name }
+                );
+            } else {
+                paymentData = await paymentService.createVirtualAccountTransaction(
+                    sale.sale_id,
+                    sale.total_amount,
+                    bank || 'BCA'
+                );
+            }
+
+            await db.execute({
+                sql: "UPDATE sales SET payment_status = 'Pending' WHERE sale_id = ?",
+                args: [saleId]
+            });
+
+            res.status(200).json(paymentData);
+        } catch (err) {
+            res.status(500).json({ error: err.message });
         }
-        const result = await paymentService.createQrisTransaction(orderId || Date.now(), amount, customerInfo);
-        res.json(result);
-    } catch (e) {
-        res.status(500).json({ error: e.message });
-    }
-};
+    },
 
-exports.createVa = async (req, res) => {
-    try {
-        const { orderId, amount, bank } = req.body;
-        const result = await paymentService.createVirtualAccountTransaction(orderId || Date.now(), amount, bank || 'BCA');
-        res.json(result);
-    } catch (e) {
-        res.status(500).json({ error: e.message });
-    }
-};
+    async handleWebhook(req, res) {
+        try {
+            const payload = req.body;
+            const signature = req.headers['x-callback-signature'];
 
-exports.handleWebhook = async (req, res) => {
-    try {
-        const signature = req.headers['x-callback-signature'] || req.headers['x-signature'];
-        const isValid = paymentService.verifyWebhookSignature(req.body, signature);
-        if (!isValid) {
-            return res.status(403).json({ error: 'Invalid Payment Webhook Signature' });
+            if (!paymentService.verifyWebhookSignature(payload, signature)) {
+                return res.status(401).json({ error: "Invalid signature" });
+            }
+
+            const { orderId, status } = payload;
+
+            if (status === 'success' || status === 'settlement') {
+                const saleResult = await db.execute({
+                    sql: "SELECT items FROM sales WHERE sale_id = ?",
+                    args: [orderId]
+                });
+
+                const sale = saleResult.rows[0];
+                if (sale) {
+                    const items = JSON.parse(sale.items);
+                    
+                    for (const item of items) {
+                        await db.execute({
+                            sql: "UPDATE products SET stock = stock - ? WHERE id = ?",
+                            args: [item.qty, item.product_id]
+                        });
+                    }
+
+                    await db.execute({
+                        sql: "UPDATE sales SET payment_status = 'Paid' WHERE sale_id = ?",
+                        args: [orderId]
+                    });
+                }
+            }
+
+            res.status(200).json({ received: true });
+        } catch (err) {
+            res.status(500).json({ error: err.message });
         }
-        console.log('[PAYMENT WEBHOOK VERIFIED]', req.body);
-        res.json({ success: true, message: 'Webhook Processed' });
-    } catch (e) {
-        res.status(500).json({ error: e.message });
+    },
+
+    async getStatus(req, res) {
+        try {
+            const { saleId } = req.params;
+            const result = await db.execute({
+                sql: "SELECT payment_status FROM sales WHERE sale_id = ?",
+                args: [saleId]
+            });
+
+            if (result.rows.length === 0) {
+                return res.status(404).json({ error: "Data tidak ditemukan" });
+            }
+
+            res.status(200).json(result.rows[0]);
+        } catch (err) {
+            res.status(500).json({ error: err.message });
+        }
     }
 };
+
+module.exports = paymentController;
