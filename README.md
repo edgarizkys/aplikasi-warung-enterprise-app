@@ -1,25 +1,93 @@
 # Aplikasi Warung Enterprise
 
-ðxS Sistem Manajemen Warung Enterprise - World-Class Enterprise v5.0
+Sistem POS Enterprise untuk manajemen warung modern. Efisien, cepat, skala besar.
 
-## Pages
-- **/** - Landing Page (Marketing, Hero, Features, Pricing, Testimonials)
-- **/login** - Login & Register Page
-- **/dashboard** - Main Dashboard (CRUD, Analytics, Charts)
+## Fitur Utama
+- **Manajemen Stok**: Pantau stok, SKU, dan kategori produk.
+- **Penjualan**: Kasir digital dengan status pembayaran.
+- **Pelanggan**: Database loyalitas pelanggan.
+- **Laporan**: Analisis penjualan harian dan bulanan.
+- **Barcode**: Support integrasi scanner barcode.
+- **Supplier**: Pencatatan pembelian barang ke supplier.
 
-## Features & Architecture
-- **Landing Page**: Scroll animations, typing effects, parallax, glassmorphism
-- **Payment Gateway**: Midtrans & Xendit QRIS / VA + Webhook Verification
-- **Security**: Express Rate Limiter (100 req/min) & Helmet Security
-- **Analytics**: Chart.js Interactive Graph Visualization
-- **Export**: Export CSV/Excel & Print PDF Report
-- **Multi-Tenant**: Multi-Tenant & Multi-Branch Ready Schema
-- **Database**: Turso Cloud SQLite Database
+## Stack Teknologi
+- **Backend**: Express.js (Node.js)
+- **Database**: Turso SQLite (LibSQL)
+- **Frontend**: Tailwind CSS
+- **Template Engine**: EJS / HTML
+- **Deployment**: Edge Ready
 
-## Entities
-- **Menu & Item**: Kode Menu, Nama Menu, Kategori, Harga (Rp), Stok Unit
-- **Transaksi Kasir**: No. Invoice, Nama Pembeli, Pesanan, Total (Rp), Metode Bayar, Status
-- **Pengeluaran**: Keterangan, Nominal (Rp), Tanggal
+## Persyaratan Sistem
+- Node.js v18 atau lebih baru
+- Akun Turso (untuk database cloud) atau SQLite lokal
 
----
-*Built by E.D.G.A.R Senior Principal Engineer Agent - EdgarTech Corp*
+## Instalasi
+
+1. Clone repositori:
+```bash
+git clone https://github.com/username/warung-enterprise.git
+cd warung-enterprise
+```
+
+2. Instal dependensi:
+```bash
+npm install
+```
+
+3. Konfigurasi Environment:
+Buat file `.env` di root folder:
+```env
+PORT=3000
+TURSO_URL=libsql://your-db-name.turso.io
+TURSO_TOKEN=your-auth-token
+NODE_ENV=production
+```
+
+4. Jalankan Migrasi Database:
+```bash
+npm run migrate
+```
+
+5. Jalankan Aplikasi:
+```bash
+npm start
+```
+
+## Struktur Data (Entitas)
+
+### Produk (Products)
+- `name`: Nama Produk
+- `description`: Deskripsi
+- `price`: Harga Jual
+- `cost_price`: Harga Beli
+- `stock`: Jumlah Stok
+- `category`: Kategori
+- `sku`: Kode SKU
+
+### Penjualan (Sales)
+- `sale_id`: ID Transaksi
+- `customer_name`: Nama Pembeli
+- `items`: JSON list barang
+- `total_amount`: Total Bayar
+- `payment_status`: Status (Paid/Unpaid)
+- `sale_date`: Tanggal Transaksi
+
+### Pelanggan (Customers)
+- `name`: Nama Pelanggan
+- `phone`: Nomor Telepon
+- `address`: Alamat
+
+## API Endpoints (Ringkasan)
+- `GET /api/products` - List semua produk (Pagination)
+- `POST /api/sales` - Input transaksi baru
+- `GET /api/reports/daily` - Laporan harian
+- `PUT /api/products/:id` - Update stok/harga
+
+## Keamanan & Performa
+- Proteksi SQL Injection via LibSQL parameterized queries.
+- Middleware Error Handling global.
+- Pagination pada setiap list entitas untuk performa data besar.
+- Multi-tenant ready architecture.
+
+## Lisensi
+Proprietary - Warung Enterprise Solution.
