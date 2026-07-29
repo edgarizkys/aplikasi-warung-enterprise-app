@@ -1,150 +1,257 @@
-// ===== SHARED SCRIPTS v6.0: Particles, Scroll Reveal, Toast, Typing =====
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const { createClient } = require('@libsql/client');
 
-// Particle Canvas Background
-function initParticles() {
-    const canvas = document.getElementById('particle-canvas');
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    let particles = [];
-    const COUNT = 60;
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-    function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-    resize();
-    window.addEventListener('resize', resize);
+// Turso DB Client
+const db = createClient({
+    url: process.env.TURSO_DATABASE_URL,
+    authToken: process.env.TURSO_AUTH_TOKEN,
+});
 
-    class Particle {
-        constructor() {
-            this.x = Math.random() * canvas.width;
-            this.y = Math.random() * canvas.height;
-            this.vx = (Math.random() - 0.5) * 0.4;
-            this.vy = (Math.random() - 0.5) * 0.4;
-            this.size = Math.random() * 1.5 + 0.5;
-            this.opacity = Math.random() * 0.4 + 0.1;
-        }
-        update() {
-            this.x += this.vx; this.y += this.vy;
-            if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
-            if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
-        }
-        draw() {
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(99, 102, 241, ${this.opacity})`;
-            ctx.fill();
-        }
+// Middleware
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Multi-tenant middleware
+app.use((req, res, next) => {
+    const tenantId = req.headers['x-tenant-id'];
+    if (!tenantId) {
+        return res.status(400).json({ message: 'Header "x-tenant-id" wajib.' });
     }
+    req.tenantId = tenantId;
+    next();
+});
 
-    for (let i = 0; i < COUNT; i++) particles.push(new Particle());
-
-    function animate() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        particles.forEach(p => { p.update(); p.draw(); });
-        for (let i = 0; i < particles.length; i++) {
-            for (let j = i + 1; j < particles.length; j++) {
-                const dx = particles[i].x - particles[j].x;
-                const dy = particles[i].y - particles[j].y;
-                if (dx*dx + dy*dy < 12000) {
-                    ctx.beginPath();
-                    ctx.moveTo(particles[i].x, particles[i].y);
-                    ctx.lineTo(particles[j].x, particles[j].y);
-                    ctx.strokeStyle = `rgba(99, 102, 241, ${0.06 * (1 - Math.sqrt(dx*dx+dy*dy) / 110)})`;
-                    ctx.lineWidth = 0.5;
-                    ctx.stroke();
-                }
-            }
-        }
-        requestAnimationFrame(animate);
+// Database Initialization
+async function initDb() {
+    try {
+        await db.execute(`
+            CREATE TABLE IF NOT EXISTS products (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                tenant_id TEXT NOT NULL,
+                name TEXT NOT NULL,
+                description TEXT,
+                price REAL NOT NULL,
+                cost_price REAL NOT NULL,
+                stock INTEGER NOT NULL,
+                category TEXT,
+                sku TEXT UNIQUE NOT NULL
+            );
+        `);
+        await db.execute(`
+            CREATE TABLE IF NOT EXISTS sales (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                tenant_id TEXT NOT NULL,
+                sale_id TEXT UNIQUE NOT NULL,
+                customer_name TEXT,
+                items TEXT NOT NULL, -- JSON string
+                total_amount REAL NOT NULL,
+                payment_status TEXT NOT NULL,
+                sale_date TEXT NOT NULL
+            );
+        `);
+        await db.execute(`
+            CREATE TABLE IF NOT EXISTS customers (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                tenant_id TEXT NOT NULL,
+                name TEXT NOT NULL,
+                phone TEXT,
+                address TEXT
+            );
+        `);
+        await db.execute(`
+            CREATE TABLE IF NOT EXISTS purchases (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                tenant_id TEXT NOT NULL,
+                purchase_id TEXT UNIQUE NOT NULL,
+                supplier_name TEXT,
+                items TEXT NOT NULL, -- JSON string
+                total_amount REAL NOT NULL,
+                purchase_date TEXT NOT NULL,
+                payment_status TEXT NOT NULL
+            );
+        `);
+        console.log('Tabel database siap.');
+    } catch (e) {
+        console.error('Gagal inisialisasi database:', e);
+        process.exit(1); // Keluar jika DB gagal
     }
-    animate();
 }
 
-// Toast Notification System
-function showToast(message, type = 'info', duration = 3000) {
-    const existing = document.querySelector('.toast');
-    if (existing) existing.remove();
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
-    toast.textContent = message;
-    document.body.appendChild(toast);
-    requestAnimationFrame(() => { toast.classList.add('show'); });
-    setTimeout(() => {
-        toast.classList.remove('show');
-        setTimeout(() => toast.remove(), 400);
-    }, duration);
-}
+// Helper for pagination
+const getPagination = (req) => {
+    const page = parseInt(req.query._page) || 1;
+    const limit = parseInt(req.query._limit) || 10;
+    const offset = (page - 1) * limit;
+    return { limit, offset };
+};
 
-// Scroll Reveal with IntersectionObserver
-document.addEventListener('DOMContentLoaded', () => {
-    initParticles();
-    const revealElements = document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale');
-    const revealObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('active');
-            }
+// --- Routes ---
+
+// Products
+app.get('/api/products', async (req, res) => {
+    const { limit, offset } = getPagination(req);
+    const { tenantId } = req;
+    try {
+        const result = await db.execute({
+            sql: `SELECT * FROM products WHERE tenant_id = ? LIMIT ? OFFSET ?`,
+            args: [tenantId, limit, offset]
         });
-    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
-    revealElements.forEach(el => revealObserver.observe(el));
+        const countResult = await db.execute({
+            sql: `SELECT COUNT(*) as count FROM products WHERE tenant_id = ?`,
+            args: [tenantId]
+        });
+        res.header('X-Total-Count', countResult.rows[0].count);
+        res.json(result.rows);
+    } catch (e) {
+        console.error('Produk gagal ambil:', e);
+        res.status(500).json({ message: 'Produk gagal ambil.', error: e.message });
+    }
 });
 
-// Typing Effect Function
-function typeWriter(element, text, speed = 50) {
-    return new Promise(resolve => {
-        let i = 0;
-        element.textContent = '';
-        function type() {
-            if (i < text.length) {
-                element.textContent += text.charAt(i);
-                i++;
-                setTimeout(type, speed);
-            } else {
-                resolve();
+app.get('/api/products/:id', async (req, res) => {
+    const { id } = req.params;
+    const { tenantId } = req;
+    try {
+        const result = await db.execute({
+            sql: `SELECT * FROM products WHERE id = ? AND tenant_id = ?`,
+            args: [id, tenantId]
+        });
+        if (result.rows.length === 0) return res.status(404).json({ message: 'Produk tidak ditemukan.' });
+        res.json(result.rows[0]);
+    } catch (e) {
+        console.error('Produk gagal ambil:', e);
+        res.status(500).json({ message: 'Produk gagal ambil.', error: e.message });
+    }
+});
+
+app.post('/api/products', async (req, res) => {
+    const { name, description, price, cost_price, stock, category, sku } = req.body;
+    const { tenantId } = req;
+    if (!name || !price || !cost_price || stock === undefined || !sku) {
+        return res.status(400).json({ message: 'Nama, harga jual, harga beli, stok, dan SKU wajib.' });
+    }
+    try {
+        const result = await db.execute({
+            sql: `INSERT INTO products (tenant_id, name, description, price, cost_price, stock, category, sku) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            args: [tenantId, name, description, price, cost_price, stock, category, sku]
+        });
+        res.status(201).json({ id: result.lastInsertRowid, ...req.body });
+    } catch (e) {
+        console.error('Produk gagal tambah:', e);
+        res.status(500).json({ message: 'Produk gagal tambah.', error: e.message });
+    }
+});
+
+app.put('/api/products/:id', async (req, res) => {
+    const { id } = req.params;
+    const { name, description, price, cost_price, stock, category, sku } = req.body;
+    const { tenantId } = req;
+    if (!name || !price || !cost_price || stock === undefined || !sku) {
+        return res.status(400).json({ message: 'Nama, harga jual, harga beli, stok, dan SKU wajib.' });
+    }
+    try {
+        const result = await db.execute({
+            sql: `UPDATE products SET name = ?, description = ?, price = ?, cost_price = ?, stock = ?, category = ?, sku = ? WHERE id = ? AND tenant_id = ?`,
+            args: [name, description, price, cost_price, stock, category, sku, id, tenantId]
+        });
+        if (result.rowsAffected === 0) return res.status(404).json({ message: 'Produk tidak ditemukan.' });
+        res.json({ id, ...req.body });
+    } catch (e) {
+        console.error('Produk gagal update:', e);
+        res.status(500).json({ message: 'Produk gagal update.', error: e.message });
+    }
+});
+
+app.delete('/api/products/:id', async (req, res) => {
+    const { id } = req.params;
+    const { tenantId } = req;
+    try {
+        const result = await db.execute({
+            sql: `DELETE FROM products WHERE id = ? AND tenant_id = ?`,
+            args: [id, tenantId]
+        });
+        if (result.rowsAffected === 0) return res.status(404).json({ message: 'Produk tidak ditemukan.' });
+        res.status(204).send();
+    } catch (e) {
+        console.error('Produk gagal hapus:', e);
+        res.status(500).json({ message: 'Produk gagal hapus.', error: e.message });
+    }
+});
+
+// Sales
+app.get('/api/sales', async (req, res) => {
+    const { limit, offset } = getPagination(req);
+    const { tenantId } = req;
+    try {
+        const result = await db.execute({
+            sql: `SELECT * FROM sales WHERE tenant_id = ? LIMIT ? OFFSET ?`,
+            args: [tenantId, limit, offset]
+        });
+        const countResult = await db.execute({
+            sql: `SELECT COUNT(*) as count FROM sales WHERE tenant_id = ?`,
+            args: [tenantId]
+        });
+        res.header('X-Total-Count', countResult.rows[0].count);
+        res.json(result.rows.map(row => ({ ...row, items: JSON.parse(row.items) })));
+    } catch (e) {
+        console.error('Penjualan gagal ambil:', e);
+        res.status(500).json({ message: 'Penjualan gagal ambil.', error: e.message });
+    }
+});
+
+app.get('/api/sales/:id', async (req, res) => {
+    const { id } = req.params;
+    const { tenantId } = req;
+    try {
+        const result = await db.execute({
+            sql: `SELECT * FROM sales WHERE id = ? AND tenant_id = ?`,
+            args: [id, tenantId]
+        });
+        if (result.rows.length === 0) return res.status(404).json({ message: 'Penjualan tidak ditemukan.' });
+        const sale = { ...result.rows[0], items: JSON.parse(result.rows[0].items) };
+        res.json(sale);
+    } catch (e) {
+        console.error('Penjualan gagal ambil:', e);
+        res.status(500).json({ message: 'Penjualan gagal ambil.', error: e.message });
+    }
+});
+
+app.post('/api/sales', async (req, res) => {
+    const { sale_id, customer_name, items, total_amount, payment_status, sale_date } = req.body;
+    const { tenantId } = req;
+    if (!sale_id || !items || !total_amount || !payment_status || !sale_date) {
+        return res.status(400).json({ message: 'ID Penjualan, item, total harga, status pembayaran, dan tanggal wajib.' });
+    }
+    if (!Array.isArray(items) || items.length === 0) {
+        return res.status(400).json({ message: 'Item penjualan harus array tidak kosong.' });
+    }
+
+    try {
+        // Check and decrement stock
+        for (const item of items) {
+            const productResult = await db.execute({
+                sql: `SELECT id, stock FROM products WHERE id = ? AND tenant_id = ?`,
+                args: [item.product_id, tenantId]
+            });
+            if (productResult.rows.length === 0) {
+                return res.status(404).json({ message: `Produk dengan ID ${item.product_id} tidak ditemukan.` });
+            }
+            const currentStock = productResult.rows[0].stock;
+            if (currentStock < item.qty) {
+                return res.status(400).json({ message: `Stok tidak cukup untuk produk: ${item.product_name}. Stok tersedia: ${currentStock}, diminta: ${item.qty}.` });
             }
         }
-        type();
-    });
-}
 
-// Counter Animation
-function animateCounter(element, target, duration = 1500) {
-    let start = 0;
-    const increment = target / (duration / 16);
-    function update() {
-        start += increment;
-        if (start >= target) {
-            element.textContent = target.toLocaleString('id-ID');
-            return;
-        }
-        element.textContent = Math.floor(start).toLocaleString('id-ID');
-        requestAnimationFrame(update);
-    }
-    update();
-}
-
-// Smooth parallax on scroll
-window.addEventListener('scroll', () => {
-    const scrolled = window.pageYOffset;
-    const parallaxElements = document.querySelectorAll('.parallax-bg');
-    parallaxElements.forEach(el => {
-        el.style.backgroundPositionY = (scrolled * 0.5) + 'px';
-    });
-});
-
-// Magnetic button effect
-document.querySelectorAll('.magnetic-btn').forEach(btn => {
-    btn.addEventListener('mousemove', (e) => {
-        const rect = btn.getBoundingClientRect();
-        const x = e.clientX - rect.left - rect.width / 2;
-        const y = e.clientY - rect.top - rect.height / 2;
-        btn.style.transform = `translate(${x * 0.15}px, ${y * 0.15}px) scale(1.05)`;
-    });
-    btn.addEventListener('mouseleave', () => {
-        btn.style.transform = 'translate(0, 0) scale(1)';
-    });
-});
-
-// Mobile hamburger toggle
-function toggleMobileNav() {
-    const nav = document.querySelector('.nav-links');
-    if (nav) nav.classList.toggle('open');
-}
+        // All stock checks passed, proceed with sale and stock decrement
+        await db.execute('BEGIN');
+        for (const item of items) {
+            await db.execute({
+                sql: `UPDATE products SET stock = stock - ? WHERE id = ? AND tenant_id = ?`,
+                args: [item.qty, item.product_id, tenantId]
+            });
