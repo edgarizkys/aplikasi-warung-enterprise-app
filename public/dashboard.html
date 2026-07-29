@@ -1,115 +1,236 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aplikasi Warung Enterprise - Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <style>body{font-family:system-ui,sans-serif;background:#0f172a;}</style>
-</head>
-<body class="bg-slate-950 text-white min-h-screen" x-data="dashboard()">
-    <nav class="bg-slate-900/80 border-b border-slate-800 px-6 py-3 flex justify-between items-center sticky top-0 z-50 backdrop-blur-xl">
-        <h1 class="text-lg font-bold bg-gradient-to-r from-amber-600 to-emerald-600 bg-clip-text text-transparent">ðxS Aplikasi Warung Enterprise</h1>
-        <div class="flex gap-2"><button @click="activeTab='menu'" :class="activeTab==='menu'?' bg-gradient-to-r from-amber-600 to-emerald-600 text-white font-bold shadow-lg':'text-slate-400 hover:text-white'" class="px-4 py-2 rounded-xl text-xs transition-all">Menu & Item</button><button @click="activeTab='transaksi'" :class="activeTab==='transaksi'?' bg-gradient-to-r from-amber-600 to-emerald-600 text-white font-bold shadow-lg':'text-slate-400 hover:text-white'" class="px-4 py-2 rounded-xl text-xs transition-all">Transaksi Kasir</button><button @click="activeTab='pengeluaran'" :class="activeTab==='pengeluaran'?' bg-gradient-to-r from-amber-600 to-emerald-600 text-white font-bold shadow-lg':'text-slate-400 hover:text-white'" class="px-4 py-2 rounded-xl text-xs transition-all">Pengeluaran</button></div>
-    </nav>
-    <main class="max-w-7xl mx-auto p-6 space-y-6">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <template x-for="s in stats" :key="s.key">
-                <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-5">
-                    <p class="text-xs text-slate-400" x-text="s.label"></p>
-                    <h3 class="text-2xl font-bold" x-text="(data[s.key] || []).length"></h3>
-                </div>
-            </template>
-        </div>
-        
-        <div x-show="activeTab==='menu'" class="space-y-4">
-            <div class="flex justify-between items-center">
-                <h2 class="text-lg font-bold text-white">ðxS Menu & Item</h2>
-                <button @click="openCreateModal('menu')" class="bg-gradient-to-r from-amber-600 to-emerald-600 text-white font-bold text-xs px-5 py-2 rounded-xl">Tambah Menu & Item</button>
-            </div>
-            <div class="glass-enhanced border border-slate-800 rounded-2xl overflow-hidden">
-                <table class="w-full"><thead class="bg-slate-900/50"><tr><th class="p-3 text-left text-[10px] uppercase tracking-wider">Kode Menu</th><th class="p-3 text-left text-[10px] uppercase tracking-wider">Nama Menu</th><th class="p-3 text-left text-[10px] uppercase tracking-wider">Kategori</th><th class="p-3 text-left text-[10px] uppercase tracking-wider">Harga (Rp)</th><th class="p-3 text-left text-[10px] uppercase tracking-wider">Stok Unit</th></tr></thead>
-                <tbody><template x-for="item in menu" :key="item.id"><tr class="border-t border-slate-800/50 hover:bg-slate-800/30"><td class="p-3 font-semibold text-slate-200 text-xs" x-text="item.kode"></td><td class="p-3 font-semibold text-slate-200 text-xs" x-text="item.nama"></td><td class="p-3 font-semibold text-slate-200 text-xs" x-text="item.kategori"></td><td class="p-3 font-semibold text-slate-200 text-xs" x-text="item.harga"></td><td class="p-3 font-semibold text-slate-200 text-xs" x-text="item.stok"></td>
-                <td class="p-3"><button @click="deleteItem('menu', item.id)" class="text-red-400 text-xs">Hapus</button></td>
-                </tr></template></tbody></table>
-            </div>
-        </div>
-        <div x-show="activeTab==='transaksi'" class="space-y-4">
-            <div class="flex justify-between items-center">
-                <h2 class="text-lg font-bold text-white">ðxS Transaksi Kasir</h2>
-                <button @click="openCreateModal('transaksi')" class="bg-gradient-to-r from-amber-600 to-emerald-600 text-white font-bold text-xs px-5 py-2 rounded-xl">Tambah Transaksi Kasir</button>
-            </div>
-            <div class="glass-enhanced border border-slate-800 rounded-2xl overflow-hidden">
-                <table class="w-full"><thead class="bg-slate-900/50"><tr><th class="p-3 text-left text-[10px] uppercase tracking-wider">No. Invoice</th><th class="p-3 text-left text-[10px] uppercase tracking-wider">Nama Pembeli</th><th class="p-3 text-left text-[10px] uppercase tracking-wider">Pesanan</th><th class="p-3 text-left text-[10px] uppercase tracking-wider">Total (Rp)</th><th class="p-3 text-left text-[10px] uppercase tracking-wider">Metode Bayar</th><th class="p-3 text-left text-[10px] uppercase tracking-wider">Status</th></tr></thead>
-                <tbody><template x-for="item in transaksi" :key="item.id"><tr class="border-t border-slate-800/50 hover:bg-slate-800/30"><td class="p-3 font-semibold text-slate-200 text-xs" x-text="item.invoice"></td><td class="p-3 font-semibold text-slate-200 text-xs" x-text="item.pembeli"></td><td class="p-3 font-semibold text-slate-200 text-xs" x-text="item.item"></td><td class="p-3 font-semibold text-slate-200 text-xs" x-text="item.total"></td><td class="p-3 font-semibold text-slate-200 text-xs" x-text="item.metode"></td><td class="p-3 font-semibold text-slate-200 text-xs" x-text="item.status"></td>
-                <td class="p-3"><button @click="deleteItem('transaksi', item.id)" class="text-red-400 text-xs">Hapus</button></td>
-                </tr></template></tbody></table>
-            </div>
-        </div>
-        <div x-show="activeTab==='pengeluaran'" class="space-y-4">
-            <div class="flex justify-between items-center">
-                <h2 class="text-lg font-bold text-white">ðxS Pengeluaran</h2>
-                <button @click="openCreateModal('pengeluaran')" class="bg-gradient-to-r from-amber-600 to-emerald-600 text-white font-bold text-xs px-5 py-2 rounded-xl">Tambah Pengeluaran</button>
-            </div>
-            <div class="glass-enhanced border border-slate-800 rounded-2xl overflow-hidden">
-                <table class="w-full"><thead class="bg-slate-900/50"><tr><th class="p-3 text-left text-[10px] uppercase tracking-wider">Keterangan</th><th class="p-3 text-left text-[10px] uppercase tracking-wider">Nominal (Rp)</th><th class="p-3 text-left text-[10px] uppercase tracking-wider">Tanggal</th></tr></thead>
-                <tbody><template x-for="item in pengeluaran" :key="item.id"><tr class="border-t border-slate-800/50 hover:bg-slate-800/30"><td class="p-3 font-semibold text-slate-200 text-xs" x-text="item.keterangan"></td><td class="p-3 font-semibold text-slate-200 text-xs" x-text="item.nominal"></td><td class="p-3 font-semibold text-slate-200 text-xs" x-text="item.tanggal"></td>
-                <td class="p-3"><button @click="deleteItem('pengeluaran', item.id)" class="text-red-400 text-xs">Hapus</button></td>
-                </tr></template></tbody></table>
-            </div>
-        </div>
-    </main>
-    <div x-show="showModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50" @click.self="showModal=false">
-        <div class="bg-slate-900 border border-slate-700 rounded-2xl p-6 w-full max-w-md">
-            <h3 class="text-lg font-bold text-white mb-4">Tambah Data</h3>
-            <template x-for="f in modalFields" :key="f.key">
-                <div class="mb-3">
-                    <label class="text-xs text-slate-400" x-text="f.label"></label>
-                    <input :type="f.type === 'number' ? 'number' : 'text'" x-model="newItem[f.key]" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white text-sm mt-1">
-                </div>
-            </template>
-            <div class="flex gap-2 mt-4">
-                <button @click="saveItem()" class="bg-gradient-to-r from-amber-600 to-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-bold">Simpan</button>
-                <button @click="showModal=false" class="bg-slate-800 text-slate-300 px-4 py-2 rounded-xl text-sm">Batal</button>
-            </div>
-        </div>
-    </div>
-    <script>
-    function dashboard() {
-        return {
-            activeTab: "menu",
-            stats: [{ key: "menu", label: "Menu & Item" }, { key: "transaksi", label: "Transaksi Kasir" }, { key: "pengeluaran", label: "Pengeluaran" }],
-            data: {"menu": [], "transaksi": [], "pengeluaran": []},
-            newItem: {},
-            showModal: false,
-            _modalEntity: null,
-            get modalFields() {
-                const entity = {"menu": [], "transaksi": [], "pengeluaran": [] };
-                for (const [k, v] of Object.entries(this.data)) {
-                    if (k === this._modalEntity && v.length > 0) {
-                        const sample = v[0];
-                        return Object.keys(sample).filter(k => k !== 'id').map(k => ({ key: k, label: k, type: typeof sample[k] === 'number' ? 'number' : 'text' }));
-                    }
-                }
-                return [];
-            },
-            openCreateModal(entity) {
-                this._modalEntity = entity;
-                this.newItem = {};
-                this.showModal = true;
-            },
-            saveItem() {
-                if (this._modalEntity && this.data[this._modalEntity]) {
-                    this.data[this._modalEntity].push({...this.newItem, id: Date.now() });
-                }
-                this.showModal = false;
-                this.newItem = {};
-            },
-            deleteItem(entity, id) {
-                this.data[entity] = this.data[entity].filter(i => i.id !== id);
-            }
+    <style>
+        :root {
+            --accent-from: #8BC34A;
+            --accent-to: #4CAF50;
         }
-    }
-    </script>
-</body>
-</html>
+        .gradient-bg { background: linear-gradient(135deg, var(--accent-from), var(--accent-to)); }
+        .glass { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); }
+        .card-hover { transition: all 0.3s; }
+        .card-hover:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+        .sidebar-link:hover { background-color: rgba(255, 255, 255, 0.1); }
+        .active-sidebar-link { background-color: rgba(255, 255, 255, 0.2); font-weight: bold; }
+    </style>
+</head>
+<body class="bg-gray-900 text-white flex min-h-screen">
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="w-64 bg-gray-800 p-4 flex flex-col justify-between">
+        <div>
+            <h2 class="text-2xl font-bold text-center mb-8">Warung Enterprise</h2>
+            <nav>
+                <ul>
+                    <li><a href="#" data-page="dashboard" class="block py-3 px-4 rounded-lg sidebar-link active-sidebar-link">Dashboard</a></li>
+                    <li><a href="#" data-page="products" class="block py-3 px-4 rounded-lg sidebar-link">Produk</a></li>
+                    <li><a href="#" data-page="sales" class="block py-3 px-4 rounded-lg sidebar-link">Penjualan</a></li>
+                    <li><a href="#" data-page="customers" class="block py-3 px-4 rounded-lg sidebar-link">Pelanggan</a></li>
+                    <li><a href="#" data-page="purchases" class="block py-3 px-4 rounded-lg sidebar-link">Pembelian</a></li>
+                    <li><a href="#" data-page="reports" class="block py-3 px-4 rounded-lg sidebar-link">Laporan</a></li>
+                </ul>
+            </nav>
+        </div>
+        <div class="text-center">
+            <button id="logout-button" class="w-full py-3 px-4 rounded-lg bg-red-600 hover:bg-red-700 transition">Logout</button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main id="main-content" class="flex-1 p-8">
+        <!-- Dashboard Page -->
+        <section id="page-dashboard" class="space-y-8">
+            <h1 class="text-4xl font-bold">Selamat Datang!</h1>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="glass p-6 rounded-lg card-hover">
+                    <h3 class="text-2xl font-semibold mb-4">Total Penjualan Hari Ini</h3>
+                    <p class="text-4xl font-bold" id="today-sales-amount">Rp 0</p>
+                </div>
+                <div class="glass p-6 rounded-lg card-hover">
+                    <h3 class="text-2xl font-semibold mb-4">Stok Produk Rendah</h3>
+                    <p class="text-4xl font-bold" id="low-stock-count">0</p>
+                </div>
+                <div class="glass p-6 rounded-lg card-hover">
+                    <h3 class="text-2xl font-semibold mb-4">Pelanggan Baru Hari Ini</h3>
+                    <p class="text-4xl font-bold" id="new-customers-count">0</p>
+                </div>
+            </div>
+            <div class="glass p-6 rounded-lg">
+                <h3 class="text-2xl font-semibold mb-4">Ringkasan Penjualan (7 Hari Terakhir)</h3>
+                <canvas id="sales-chart"></canvas>
+            </div>
+        </section>
+
+        <!-- Products Page -->
+        <section id="page-products" class="hidden space-y-8">
+            <h1 class="text-4xl font-bold">Manajemen Produk</h1>
+            <div class="flex justify-between items-center mb-4">
+                <input type="text" id="product-search" placeholder="Cari produk..." class="p-3 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-accent-to w-1/3">
+                <button id="add-product-btn" class="px-6 py-3 rounded-lg bg-accent-to hover:bg-accent-from transition">Tambah Produk</button>
+            </div>
+            <div class="glass p-6 rounded-lg overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="border-b border-gray-700">
+                            <th class="py-3 px-4">Nama Produk</th>
+                            <th class="py-3 px-4">Kategori</th>
+                            <th class="py-3 px-4">Harga Jual</th>
+                            <th class="py-3 px-4">Stok</th>
+                            <th class="py-3 px-4">SKU</th>
+                            <th class="py-3 px-4">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="products-table-body">
+                        <!-- Product rows will be loaded here -->
+                    </tbody>
+                </table>
+                <div id="product-pagination" class="mt-4 flex justify-center"></div>
+            </div>
+        </section>
+
+        <!-- Sales Page -->
+        <section id="page-sales" class="hidden space-y-8">
+            <h1 class="text-4xl font-bold">Pencatatan Penjualan</h1>
+            <div class="flex justify-between items-center mb-4">
+                <input type="text" id="sale-search" placeholder="Cari penjualan (ID/Nama Pelanggan)..." class="p-3 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-accent-to w-1/3">
+                <button id="add-sale-btn" class="px-6 py-3 rounded-lg bg-accent-to hover:bg-accent-from transition">Tambah Penjualan</button>
+            </div>
+            <div class="glass p-6 rounded-lg overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="border-b border-gray-700">
+                            <th class="py-3 px-4">ID Penjualan</th>
+                            <th class="py-3 px-4">Nama Pelanggan</th>
+                            <th class="py-3 px-4">Tanggal</th>
+                            <th class="py-3 px-4">Total</th>
+                            <th class="py-3 px-4">Status</th>
+                            <th class="py-3 px-4">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sales-table-body">
+                        <!-- Sale rows will be loaded here -->
+                    </tbody>
+                </table>
+                <div id="sale-pagination" class="mt-4 flex justify-center"></div>
+            </div>
+        </section>
+
+        <!-- Customers Page -->
+        <section id="page-customers" class="hidden space-y-8">
+            <h1 class="text-4xl font-bold">Manajemen Pelanggan</h1>
+            <div class="flex justify-between items-center mb-4">
+                <input type="text" id="customer-search" placeholder="Cari pelanggan..." class="p-3 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-accent-to w-1/3">
+                <button id="add-customer-btn" class="px-6 py-3 rounded-lg bg-accent-to hover:bg-accent-from transition">Tambah Pelanggan</button>
+            </div>
+            <div class="glass p-6 rounded-lg overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="border-b border-gray-700">
+                            <th class="py-3 px-4">Nama</th>
+                            <th class="py-3 px-4">Telepon</th>
+                            <th class="py-3 px-4">Alamat</th>
+                            <th class="py-3 px-4">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="customers-table-body">
+                        <!-- Customer rows will be loaded here -->
+                    </tbody>
+                </table>
+                <div id="customer-pagination" class="mt-4 flex justify-center"></div>
+            </div>
+        </section>
+
+        <!-- Purchases Page -->
+        <section id="page-purchases" class="hidden space-y-8">
+            <h1 class="text-4xl font-bold">Pencatatan Pembelian</h1>
+            <div class="flex justify-between items-center mb-4">
+                <input type="text" id="purchase-search" placeholder="Cari pembelian (Supplier/Item)..." class="p-3 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-accent-to w-1/3">
+                <button id="add-purchase-btn" class="px-6 py-3 rounded-lg bg-accent-to hover:bg-accent-from transition">Tambah Pembelian</button>
+            </div>
+            <div class="glass p-6 rounded-lg overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="border-b border-gray-700">
+                            <th class="py-3 px-4">ID Pembelian</th>
+                            <th class="py-3 px-4">Supplier</th>
+                            <th class="py-3 px-4">Tanggal</th>
+                            <th class="py-3 px-4">Total</th>
+                            <th class="py-3 px-4">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="purchases-table-body">
+                        <!-- Purchase rows will be loaded here -->
+                    </tbody>
+                </table>
+                <div id="purchase-pagination" class="mt-4 flex justify-center"></div>
+            </div>
+        </section>
+
+        <!-- Reports Page -->
+        <section id="page-reports" class="hidden space-y-8">
+            <h1 class="text-4xl font-bold">Laporan</h1>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="glass p-6 rounded-lg">
+                    <h2 class="text-3xl font-semibold mb-4">Laporan Penjualan Harian</h2>
+                    <form id="daily-report-form" class="space-y-4">
+                        <input type="date" id="daily-report-date" class="p-3 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-accent-to w-full" required>
+                        <button type="submit" class="w-full px-6 py-3 rounded-lg bg-accent-to hover:bg-accent-from transition">Generate Laporan</button>
+                    </form>
+                    <div id="daily-report-results" class="mt-4"></div>
+                </div>
+                <div class="glass p-6 rounded-lg">
+                    <h2 class="text-3xl font-semibold mb-4">Laporan Penjualan Bulanan</h2>
+                    <form id="monthly-report-form" class="space-y-4">
+                        <input type="month" id="monthly-report-month" class="p-3 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-accent-to w-full" required>
+                        <button type="submit" class="w-full px-6 py-3 rounded-lg bg-accent-to hover:bg-accent-from transition">Generate Laporan</button>
+                    </form>
+                    <div id="monthly-report-results" class="mt-4"></div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modals (Example for Add Product) -->
+    <div id="product-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-gray-800 p-8 rounded-lg shadow-xl w-full max-w-lg">
+            <h2 id="product-modal-title" class="text-3xl font-bold mb-6">Tambah Produk Baru</h2>
+            <form id="product-form" class="space-y-4">
+                <input type="hidden" id="product-id">
+                <div>
+                    <label for="product-name" class="block text-sm font-medium text-gray-300">Nama Produk</label>
+                    <input type="text" id="product-name" class="mt-1 p-3 block w-full rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-accent-to" required>
+                </div>
+                <div>
+                    <label for="product-description" class="block text-sm font-medium text-gray-300">Deskripsi</label>
+                    <textarea id="product-description" rows="3" class="mt-1 p-3 block w-full rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-accent-to"></textarea>
+                </div>
+                <div>
+                    <label for="product-price" class="block text-sm font-medium text-gray-300">Harga Jual</label>
+                    <input type="number" id="product-price" class="mt-1 p-3 block w-full rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-accent-to" required step="0.01">
+                </div>
+                <div>
+                    <label for="product-cost-price" class="block text-sm font-medium text-gray-300">Harga Beli</label>
+                    <input type="number" id="product-cost-price" class="mt-1 p-3 block w-full rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-accent-to" required step="0.01">
+                </div>
+                <div>
+                    <label for="product-stock" class="block text-sm font-medium text-gray-300">Stok</label>
+                    <input type="number" id="product-stock" class="mt-1 p-3 block w-full rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-accent-to" required>
+                </div>
+                <div>
+                    <label for="product-category" class="block text-sm font-medium text-gray-300">Kategori</label>
+                    <input type="text" id="product-category" class="mt-1 p-3 block w-full rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-accent-to">
+                </div>
+                <div>
+                    <label for="product-sku" class="block text-sm font-medium text-gray-300">SKU</label>
+                    <input type="text" id="product-sku" class="mt-1 p-3 block w-full rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-accent-to">
+                </div>
+                <div class="flex justify-end space-x-4">
+                    <button type="button" id="cancel-product-btn" class="px-6 py-3 rounded-lg bg-gray-600 hover:bg-gray-700 transition">Batal</button>
+                    <button type="submit" class="px-6 py-3 rounded-lg bg-accent-to hover:bg-accent-from transition">Simpan</button>
+                </div>
+            </form>
